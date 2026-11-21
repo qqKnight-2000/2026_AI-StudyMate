@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: AI StudyMate API
+  version: 0.1.0
+  description: M1+M2 最小闭环契约
+paths:
+  /api/v1/capture-tasks:
+    post:
+      operationId: createCaptureTask
+      summary: 提交分享链接创建采集任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCaptureTaskRequest'
+      responses:
+        '202':
+          description: 任务已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptureTaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/capture-tasks/{taskId}:
+    get:
+      operationId: getCaptureTask
+      summary: 查询采集任务状态
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptureTaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/notes/{noteId}:
+    get:
+      operationId: getNote
+      summary: 获取四层结构化笔记
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 笔记内容
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteResponse'
+components:
+  schemas:
+    CreateCaptureTaskRequest:
+      type: object
+      required: [rawShareText]
+      properties:
+        rawShareText:
+          type: string
+          example: '【高等数学】中值定理精讲 https://b23.tv/xxxxxx'
+        clientRequestId:
+          type: string
+          description: 幂等键，建议 UUID
+    CaptureTaskResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                taskId: { type: string }
+                status:
+                  type: string
+                  enum: [PENDING, PARSING, TRANSCRIBING, NOTE_GENERATING, DONE, FAILED, DEGRADED]
+                videoId: { type: string, nullable: true }
+                noteId: { type: string, nullable: true }
+                reused: { type: boolean }
+    NoteResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: './schemas/note.schema.json'
+    ApiResponse:
+      type: object
+      required: [code, message, data, traceId, timestamp]
+      properties:
+        code: { type: string, example: OK }
+        message: { type: string, example: success }
+        data: { type: object }
+        traceId: { type: string }
+        timestamp: { type: string, format: date-time }
+  responses:
+    BadRequest:
+      description: 参数校验失败
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    TooManyRequests:
+      description: 触发限流
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
