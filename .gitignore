@@ -1,0 +1,26 @@
+# ======= 全局 =======
+.DS_Store
+*.log
+
+# ======= Python / 后端 =======
+.venv/
+__pycache__/
+*.pyc
+*.db
+.env
+.pytest_cache/
+
+# ======= Android / 前端 =======
+# 编译产物
+build/
+app/build/
+.gradle/
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# 本地配置
+local.properties
+*.iml
+.idea/
